@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <title>Iniciar sesión — Gastos Familiares</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="login-page">
+
+    <section class="auth-card form-section">
+      <div class="auth-card__header">
+        <span class="header__logo">Gastos Familiares</span>
+        <p class="auth-card__subtitle">Accede a tu libro de cuentas</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="tabLogin">Iniciar sesión</button>
+        <button type="button" class="auth-tab" id="tabRegistro">Crear cuenta</button>
+      </div>
+
+      <form id="formAuth" class="auth-form">
+        <div class="form-group">
+          <label for="email">Correo</label>
+          <input type="email" id="email" required placeholder="tu@correo.com" />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" required minlength="6" placeholder="Mínimo 6 caracteres" />
+        </div>
+
+        <p class="auth-msg" id="authMsg"></p>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary" id="btnAuth" style="width: 100%;">Iniciar sesión</button>
+        </div>
+      </form>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+    <script>
+      // Script propio de login.html.
+      // No se usa auth.js aquí a propósito: auth.js redirige a login.html
+      // cuando no hay sesión, y como en esta página nunca hay sesión antes
+      // de iniciar sesión, causaría un bucle de redirección.
+
+      const tabLogin = document.getElementById("tabLogin");
+      const tabRegistro = document.getElementById("tabRegistro");
+      const form = document.getElementById("formAuth");
+      const btnAuth = document.getElementById("btnAuth");
+      const authMsg = document.getElementById("authMsg");
+
+      let modo = "login"; // "login" | "registro"
+
+      function setModo(nuevoModo) {
+        modo = nuevoModo;
+        authMsg.textContent = "";
+        if (modo === "login") {
+          tabLogin.classList.add("active");
+          tabRegistro.classList.remove("active");
+          btnAuth.textContent = "Iniciar sesión";
+        } else {
+          tabRegistro.classList.add("active");
+          tabLogin.classList.remove("active");
+          btnAuth.textContent = "Crear cuenta";
+        }
+      }
+
+      tabLogin.addEventListener("click", () => setModo("login"));
+      tabRegistro.addEventListener("click", () => setModo("registro"));
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        authMsg.textContent = "";
+        authMsg.className = "auth-msg";
+
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+
+        btnAuth.disabled = true;
+
+        if (modo === "login") {
+          const { error } = await supabase.auth.signInWithPassword({ email, password });
+          btnAuth.disabled = false;
+
+          if (error) {
+            authMsg.textContent = "Error: " + error.message;
+            authMsg.classList.add("auth-msg--error");
+            return;
+          }
+
+          window.location.href = "index.html";
+        } else {
+          const { error } = await supabase.auth.signUp({ email, password });
+          btnAuth.disabled = false;
+
+          if (error) {
+            authMsg.textContent = "Error: " + error.message;
+            authMsg.classList.add("auth-msg--error");
+            return;
+          }
+
+          authMsg.textContent = "Cuenta creada. Ya puedes iniciar sesión.";
+          authMsg.classList.add("auth-msg--exito");
+          setModo("login");
+        }
+      });
+    </script>
+  </body>
+</html>
